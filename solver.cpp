@@ -13,6 +13,14 @@ typedef std::vector<Clause> CNF;
 // Type definition for an assignment
 typedef std::set<int> Assignment;
 
+enum SAT
+{
+    satisfied,
+    unsatisfied,
+    normal,
+    completed
+};
+
 class SATSolverDPLL
 {
 public:
@@ -26,41 +34,34 @@ public:
 void SATSolverDPLL::unitPropogation(CNF &formula, Assignment &assignment)
 {
     bool unit_clause_found = true;
-    std::map<int, bool> clause_satisfied;
     while (unit_clause_found)
     {
         unit_clause_found = false;
+
         for (auto it = formula.begin(); it < formula.end();)
         {
             int unassigned_count = 0;
             int unassigned_literal = 0;
 
-            for (auto itt = (*it).begin(); itt != (*it).end(); itt++)
+            for (auto itt = (*it).begin(); itt != (*it).end();)
             {
                 int literal = *itt;
-                if (clause_satisfied[it - formula.begin()])
-                {
-                    if (assignment.find(literal) != assignment.end() || assignment.find(-literal) != assignment.end())
-                    {
-                        itt = (*it).erase(itt);
-                    }
-                }
-                else if (assignment.find(literal) != assignment.end())
+                if (assignment.find(literal) != assignment.end())
                 {
                     unit_clause_found = true;
-                    (*it).erase(literal);
-                    clause_satisfied[it - formula.begin()] = true;
+                    it = formula.erase(it);
                     break;
                 }
                 else if (assignment.find(-literal) != assignment.end())
                 {
-                    (*it).erase(literal);
+                    itt = (*it).erase(itt);
                 }
                 else
                 {
                     unassigned_count++;
                     unassigned_literal = literal;
                     // std::cout << "unassigned: " << unassigned_literal << "\n";
+                    itt++;
                 }
             }
 
@@ -68,9 +69,7 @@ void SATSolverDPLL::unitPropogation(CNF &formula, Assignment &assignment)
             std::cout << "variable: ";
 
             for (auto literal : *it)
-                std::cout << literal << " ";
-
-            std::cout << "\n";*/
+                std::cout << literal << " ";*/
 
             if (unassigned_count == 1)
             {
@@ -79,14 +78,12 @@ void SATSolverDPLL::unitPropogation(CNF &formula, Assignment &assignment)
                 it = formula.erase(it);
                 unit_clause_found = true;
             }
-            else if (unassigned_count == 0)
+            else if ((*it).size() == 0)
             {
                 it = formula.erase(it);
             }
-            else
-            {
-                it++;
-            }
+
+            it++;
 
             // std::cout << "\n\n";
         }
@@ -122,15 +119,16 @@ bool SATSolverDPLL::DPLL(CNF &formula, Assignment &assignment)
 
 int main()
 {
-    // CNF formula = {{-1}, {-3, 4}, {2, 3}, {1, -2}};
-    CNF formula = {{3}, {-1, -2}, {2, 3}, {-3, 4}};
+    CNF formula = {{-1}, {-3, 4}, {2, 3}, {1, -2}};
+    // CNF formula = {{3}, {-1, -5}, {5, 3}, {-3, 4}};
+    CNF formula_original(formula);
     Assignment assignment = {};
 
     SATSolverDPLL solver;
 
     solver.unitPropogation(formula, assignment);
 
-    if (solver.isFormulaSatisfied(formula, assignment))
+    if (/*solver.isFormulaSatisfied(formula, assignment)*/ true)
     {
         std::cout << "SAT:\n";
         for (auto literal : assignment)
@@ -139,12 +137,12 @@ int main()
             std::cout << "\n";
         }
 
-        for (auto& clause : formula)
+        for (auto &clause : formula)
         {
             std::cout << "Clauses:\n";
             for (auto literal : clause)
             {
-                std::cout << literal <<  " ";
+                std::cout << literal << " ";
             }
             std::cout << "\n";
         }
