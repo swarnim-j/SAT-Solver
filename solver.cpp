@@ -27,6 +27,7 @@ class SATSolverDPLL
 public:
     int unitPropogation(CNF &formula, Assignment &assignment);
     int pureElimination(CNF &formula, Assignment &assignment);
+    int chooseLiteral(CNF &formula);
     bool isFormulaSatisfied(const CNF &formula, const Assignment &assignment);
     // int chooseLiteral_Random(const CNF &formula, const Assignment &assignment);
 
@@ -94,7 +95,7 @@ int SATSolverDPLL::unitPropogation(CNF &formula, Assignment &assignment)
 int SATSolverDPLL::pureElimination(CNF &formula, Assignment &assignment)
 {
     std::unordered_set<int> literals;
-    for (Clause& clause : formula)
+    for (Clause &clause : formula)
     {
         for (int literal : clause)
         {
@@ -149,37 +150,78 @@ bool SATSolverDPLL::isFormulaSatisfied(const CNF &formula, const Assignment &ass
     return true;
 }
 
+int SATSolverDPLL::chooseLiteral(CNF &formula)
+{
+    // default strategy
+    return *(formula[0].begin());
+}
+
+void SATSolverDPLL::backtrack(CNF &formula, Assignment &assignment, int decisionLevel)
+{
+    // Remove assigned literals since the decision level
+    for (auto it = assignment.rbegin(); it != assignment.rend() && it->first >= decisionLevel; ++it)
+    {
+        assignment.erase(*it);
+    }
+
+    // Unassign the latest assigned literal at the decision level
+    assignment.erase(decisionLevel);
+
+    // Update clauses based on the unassigned literal
+    for (auto it = formula.begin(); it != formula.end(); ++it)
+    {
+        for (auto itt = it->begin(); itt != it->end(); ++itt)
+        {
+            if (*itt == decisionLevel)
+            {
+                // If the literal is found in a clause, erase it
+                it->erase(itt);
+                break;
+            }
+        }
+    }
+}
+
 bool SATSolverDPLL::solve(CNF &formula)
 {
-    Assignment assignment;
+    Assignment assignment = {};
     int decision_level = 0;
-
     while (true)
     {
-        int result = SATSolverDPLL::unitPropogation(formula, assignment);
-        if (result == SAT::satisfied)
-        {
-            return true;
-        }
-        if (result == SAT::unsatisfied)
-        {
-            return false;
-        }
-        if (formula.empty())
-        {
-            return true;
-        }
+        int literal = SATSolverDPLL::chooseLiteral(formula);
 
-        //int literal = chooseLiteral_Random(formula, assignment);
+        assignment.insert(literal);
+
         decision_level++;
 
-        if (solve(formula))
+        int result = unitPropogation(formula, assignment);
+
+        while (true)
         {
-            return true;
+            if (result == SAT::satisfied)
+            {
+                return true;
+            }
+            else if (result == SAT::unsatisfied)
+            {
+                if (decision_level == 0)
+                {
+                    return false;
+                }
+                else
+                {
+                    decision_level--;
+                    assignment.erase(literal);
+                    formula = formula_original;
+                    break;
+                }
+            }
+            else
+            {
+                result = pureElimination(formula, assignment);
+            }
         }
-        //backtrack()
     }
-    return false;
 }
 
 int main()
