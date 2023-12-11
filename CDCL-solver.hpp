@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <unordered_map>
 #include <queue>
+#include <set>
 
 enum SAT
 {
@@ -56,7 +57,7 @@ enum SAT
  *       A map of literal antecedent clauses
  *       Key: literal
  *       Value: the antecedent clause of the literal
- * 
+ *
  *   std::unordered_map<int, double> literal_scores
  *      A map of literal scores for VSIDS
  *      Key: literal
@@ -78,7 +79,7 @@ enum SAT
  *       The strategy
  *       0: basic strategy
  *       1: VSIDS
- * 
+ *
  *  int num_conflicts
  *     The number of conflicts
  */
@@ -89,7 +90,7 @@ private:
     // Member functions
     int unitPropagation(int &);
     int chooseLiteral();
-    int analyzeConflict(int &);
+    int analyzeConflict(int);
     void backtrack(std::vector<int> &, int &);
     void printFormula(std::vector<std::vector<int>> &);
 
@@ -213,8 +214,7 @@ int SATSolverCDCL::unitPropagation(int &decision_level)
                     unassigned_literal = literal;
                 }
                 // If the literal is assigned and satisfied, skip the clause
-                else if ((literals[abs(literal)] == 1 && literal < 0) 
-                            || (literals[abs(literal)] == 0 && literal > 0))
+                else if ((literals[abs(literal)] == 1 && literal < 0) || (literals[abs(literal)] == 0 && literal > 0))
                 {
                     continue;
                 }
@@ -273,12 +273,10 @@ int SATSolverCDCL::chooseLiteral()
         double max_score = 0.0;
         int max_score_literal = 0;
 
-        // Decay the scores of the literals if the number of conflicts
-        // is a multiple of the number of literals
-        bool decay = num_conflicts % literals.size() == 0;
-        double decay_factor = decay ? 0.95 : 1.0;
+        // Decay the scores of the literals
+        double decay_factor = 0.98;
 
-        for (auto& literal : literals)
+        for (auto &literal : literals)
         {
             if (literal.second == -1 && literal_scores[literal.first] >= max_score)
             {
@@ -296,7 +294,7 @@ int SATSolverCDCL::chooseLiteral()
     return 0;
 }
 
-int SATSolverCDCL::analyzeConflict(int &decision_level)
+int SATSolverCDCL::analyzeConflict(int decision_level)
 {
     // Increment the number of conflicts
     num_conflicts++;
@@ -327,10 +325,9 @@ int SATSolverCDCL::analyzeConflict(int &decision_level)
                 this_level_count++;
             }
 
-            // If the literal is assigned at the current decision level 
+            // If the literal is assigned at the current decision level
             // and is unassigned, it is the resolver literal
-            if (literal_decision_levels[abs(literal)] == conflict_decision_level 
-                    && literals[abs(literal)] == -1)
+            if (literal_decision_levels[abs(literal)] == conflict_decision_level && literal_antecedent_clauses[abs(literal)] != -1)
             {
                 resolver_literal = literal;
             }
@@ -342,44 +339,44 @@ int SATSolverCDCL::analyzeConflict(int &decision_level)
             break;
         }
 
+        // Conflict clause is the union of the antecedent clauses of the resolver literal
+        // and the conflict clause without the resolver literal
         std::vector<int> first_clause = conflict_clause;
         std::vector<int> second_clause = formula[literal_antecedent_clauses[abs(resolver_literal)]];
 
-        // Conflict clause is the union of the antecedent clauses of the resolver literal 
-        // and the conflict clause without the resolver literal
-        conflict_clause.clear();
-        conflict_clause.reserve(first_clause.size() + second_clause.size());
-        conflict_clause.insert(conflict_clause.end(), first_clause.begin(), first_clause.end());
-        conflict_clause.insert(conflict_clause.end(), second_clause.begin(), second_clause.end());
-        for (int i = 0; i < conflict_clause.size(); i++)
+        first_clause.insert(first_clause.end(), second_clause.begin(), second_clause.end());
+
+        for (int i = 0; i < first_clause.size(); i++)
         {
-            if (conflict_clause[i] == -resolver_literal || conflict_clause[i] == resolver_literal)
+            if (first_clause[i] == resolver_literal || first_clause[i] == -resolver_literal)
             {
-                conflict_clause.erase(conflict_clause.begin() + i);
+                first_clause.erase(first_clause.begin() + i);
                 i--;
             }
         }
-        sort(conflict_clause.begin(), conflict_clause.end());
-        conflict_clause.erase(unique(conflict_clause.begin(), conflict_clause.end()), conflict_clause.end());
 
-        // Increment the score of each literal in the conflict clause
-        for (auto literal : conflict_clause)
-        {
-            literal_scores[abs(literal)] += 1.0;
-        }
+        std::sort(first_clause.begin(), first_clause.end());
+        first_clause.erase(std::unique(first_clause.begin(), first_clause.end()), first_clause.end());
+
+        conflict_clause = first_clause;
+    }
+
+    // Increment the score of each literal in the conflict clause
+    for (auto literal : conflict_clause)
+    {
+        literal_scores[abs(literal)] += 1.0;
     }
 
     formula.push_back(conflict_clause);
 
-    // Backtrack level is the decision level of the literal that is assigned 
+    // Backtrack level is the decision level of the literal that is assigned
     // at the current decision level and is unassigned
     int backtrack_level = 0;
 
     for (int i = 0; i < conflict_clause.size(); i++)
     {
         int literal = conflict_clause[i];
-        if (literal_decision_levels[abs(literal)] != conflict_decision_level 
-                && literal_decision_levels[abs(literal)] > backtrack_level)
+        if (literal_decision_levels[abs(literal)] != conflict_decision_level && literal_decision_levels[abs(literal)] > backtrack_level)
         {
             backtrack_level = literal_decision_levels[abs(literal)];
         }
