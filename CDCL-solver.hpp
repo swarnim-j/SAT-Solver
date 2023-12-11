@@ -56,6 +56,11 @@ enum SAT
  *       A map of literal antecedent clauses
  *       Key: literal
  *       Value: the antecedent clause of the literal
+ * 
+ *   std::unordered_map<int, double> literal_scores
+ *      A map of literal scores for VSIDS
+ *      Key: literal
+ *      Value: the score of the literal
  *
  *   std::vector<std::vector<int>> formula
  *       The formula
@@ -73,6 +78,9 @@ enum SAT
  *       The strategy
  *       0: basic strategy
  *       1: VSIDS
+ * 
+ *  int num_conflicts
+ *     The number of conflicts
  */
 
 class SATSolverCDCL
@@ -89,11 +97,13 @@ private:
     std::unordered_map<int, int> literals; // 1: true, 0: false, -1: unassigned
     std::unordered_map<int, int> literal_decision_levels;
     std::unordered_map<int, int> literal_antecedent_clauses;
+    std::unordered_map<int, double> literal_scores;
     std::vector<std::vector<int>> formula;
     int literal_count;
     int assigned_literal_count;
     int antecedent_clause;
     int strategy; // 0: basic strategy, 1: VSIDS
+    int num_conflicts;
 
 public:
     // Constructors
@@ -121,6 +131,7 @@ SATSolverCDCL::SATSolverCDCL(std::vector<std::vector<int>> &formula)
                 literals[abs(literal)] = -1;
                 literal_decision_levels[abs(literal)] = -1;
                 literal_antecedent_clauses[abs(literal)] = -1;
+                literal_scores[abs(literal)] = 0;
             }
         }
     }
@@ -133,7 +144,10 @@ SATSolverCDCL::SATSolverCDCL(std::vector<std::vector<int>> &formula)
     this->antecedent_clause = -1;
 
     // Initialize the strategy
-    this->strategy = 0;
+    this->strategy = 1;
+
+    // Initialize the number of conflicts
+    this->num_conflicts = 0;
 }
 
 SATSolverCDCL::SATSolverCDCL(std::vector<std::vector<int>> &formula, int &strategy)
@@ -153,6 +167,7 @@ SATSolverCDCL::SATSolverCDCL(std::vector<std::vector<int>> &formula, int &strate
                 literals[abs(literal)] = -1;
                 literal_decision_levels[abs(literal)] = -1;
                 literal_antecedent_clauses[abs(literal)] = -1;
+                literal_scores[abs(literal)] = 0;
             }
         }
     }
@@ -166,6 +181,9 @@ SATSolverCDCL::SATSolverCDCL(std::vector<std::vector<int>> &formula, int &strate
 
     // Initialize the strategy
     this->strategy = strategy;
+
+    // Initialize the number of conflicts
+    this->num_conflicts = 0;
 }
 
 int SATSolverCDCL::unitPropagation(int &decision_level)
@@ -248,12 +266,41 @@ int SATSolverCDCL::chooseLiteral()
             }
         }
     }
+    // VSIDS
+    else if (strategy == 1)
+    {
+        // Choose the literal with the highest score
+        double max_score = 0.0;
+        int max_score_literal = 0;
+
+        for (auto literal : literals)
+        {
+            if (literal.second == -1 && literal_scores[literal.first] >= max_score)
+            {
+                max_score = literal_scores[literal.first];
+                max_score_literal = literal.first;
+            }
+        }
+
+        if (num_conflicts % literals.size() == 0)
+        {
+            for (auto literal : literals)
+            {
+                literal_scores[literal.first] *= 0.95;
+            }
+        }
+
+        return max_score_literal;
+    }
 
     return 0;
 }
 
 int SATSolverCDCL::analyzeConflict(int &decision_level)
 {
+    // Increment the number of conflicts
+    num_conflicts++;
+
     // Conflict clause is the antecedent clause
     std::vector<int> conflict_clause = formula[antecedent_clause];
 
@@ -314,6 +361,12 @@ int SATSolverCDCL::analyzeConflict(int &decision_level)
         }
         sort(conflict_clause.begin(), conflict_clause.end());
         conflict_clause.erase(unique(conflict_clause.begin(), conflict_clause.end()), conflict_clause.end());
+
+        // Increment the score of each literal in the conflict clause
+        for (auto literal : conflict_clause)
+        {
+            literal_scores[abs(literal)] += 1.0;
+        }
     }
 
     formula.push_back(conflict_clause);
