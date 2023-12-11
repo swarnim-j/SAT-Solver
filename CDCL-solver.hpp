@@ -2,6 +2,7 @@
 #include <vector>
 #include <algorithm>
 #include <unordered_map>
+#include <queue>
 
 enum SAT
 {
@@ -9,6 +10,70 @@ enum SAT
     unsatisfied,
     normal
 };
+
+/*
+ * A class for the CDCL-based SAT solver
+ *
+ * Member functions:
+ *   int unitPropagation(int &decision_level)
+ *       Propagates unit clauses
+ *       @param decision_level The current decision level
+ *       @return SAT::satisfied if the formula is satisfied
+ *               SAT::unsatisfied if the formula is unsatisfied
+ *               SAT::normal if the formula is normal
+ *
+ *   int chooseLiteral()
+ *       Chooses a literal
+ *       @return The chosen literal
+ *
+ *   int analyzeConflict(int &decision_level)
+ *       Analyzes the conflict clause
+ *       @param decision_level The current decision level
+ *       @return The decision level to backtrack to
+ *
+ *   void backtrack(std::vector<int> &conflict_clause, int &decision_level)
+ *       Backtracks to the given decision level
+ *       @param conflict_clause The conflict clause
+ *       @param decision_level The decision level to backtrack to
+ *
+ *   bool solve()
+ *       Solves the formula
+ *       @return true if the formula is satisfied
+ *               false if the formula is unsatisfied
+ *
+ * Data members:
+ *   std::unordered_map<int, int> literals
+ *       A map of literals
+ *       Key: literal
+ *       Value: 1 if the literal is true, 0 if the literal is false, -1 if the literal is unassigned
+ *
+ *   std::unordered_map<int, int> literal_decision_levels
+ *       A map of literal decision levels
+ *       Key: literal
+ *       Value: the decision level of the literal
+ *
+ *   std::unordered_map<int, int> literal_antecedent_clauses
+ *       A map of literal antecedent clauses
+ *       Key: literal
+ *       Value: the antecedent clause of the literal
+ *
+ *   std::vector<std::vector<int>> formula
+ *       The formula
+ *
+ *   int literal_count
+ *       The number of literals
+ *
+ *   int assigned_literal_count
+ *       The number of assigned literals
+ *
+ *   int antecedent_clause
+ *       The antecedent clause
+ *
+ *   int strategy
+ *       The strategy
+ *       0: basic strategy
+ *       1: VSIDS
+ */
 
 class SATSolverCDCL
 {
@@ -182,8 +247,9 @@ int SATSolverCDCL::chooseLiteral()
                 return literal.first;
             }
         }
-        return 0;
     }
+
+    return 0;
 }
 
 int SATSolverCDCL::analyzeConflict(int &decision_level)
