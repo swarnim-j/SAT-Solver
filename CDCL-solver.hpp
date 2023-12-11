@@ -273,23 +273,21 @@ int SATSolverCDCL::chooseLiteral()
         double max_score = 0.0;
         int max_score_literal = 0;
 
-        for (auto literal : literals)
+        // Decay the scores of the literals if the number of conflicts
+        // is a multiple of the number of literals
+        bool decay = num_conflicts % literals.size() == 0;
+        double decay_factor = decay ? 0.95 : 1.0;
+
+        for (auto& literal : literals)
         {
             if (literal.second == -1 && literal_scores[literal.first] >= max_score)
             {
                 max_score = literal_scores[literal.first];
                 max_score_literal = literal.first;
             }
-        }
 
-        // Decay the scores of all literals if the number of conflicts 
-        // is a multiple of the number of literals
-        if (num_conflicts % literals.size() == 0)
-        {
-            for (auto literal : literals)
-            {
-                literal_scores[literal.first] *= 0.95;
-            }
+            // Decay the score of the literal
+            literal_scores[literal.first] *= decay_factor;
         }
 
         return max_score_literal;
