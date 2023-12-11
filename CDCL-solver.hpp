@@ -13,10 +13,10 @@ enum SAT
 class SATSolverCDCL
 {
 private:
-    int unitPropagation(int&);
+    int unitPropagation(int &);
     int chooseLiteral();
-    int analyzeConflict(int&);
-    void backtrack(std::vector<int>&, int&);
+    int analyzeConflict(int &);
+    void backtrack(std::vector<int> &, int &);
 
     std::unordered_map<int, int> literals; // 1: true, 0: false, -1: unassigned
     std::unordered_map<int, int> literal_decision_levels;
@@ -27,33 +27,34 @@ private:
     int antecedent_clause;
 
 public:
-    SATSolverCDCL(std::vector<std::vector<int>>&);
+    SATSolverCDCL(std::vector<std::vector<int>> &);
+    void printFormula(std::vector<std::vector<int>> &);
 
     bool solve();
 };
 
 SATSolverCDCL::SATSolverCDCL(std::vector<std::vector<int>> &formula)
+{
+    this->formula = formula;
+    for (int i = 0; i < formula.size(); i++)
     {
-        this->formula = formula;
-        for (int i = 0; i < formula.size(); i++)
+        for (int j = 0; j < formula[i].size(); j++)
         {
-            for (int j = 0; j < formula[i].size(); j++)
+            int literal = formula[i][j];
+            if (literals.find(literal) == literals.end())
             {
-                int literal = formula[i][j];
-                if (std::find(literals.begin(), literals.end(), literal) == literals.end())
-                {
-                    literals[abs(literal)] = -1;
-                    literal_decision_levels[abs(literal)] = -1;
-                    literal_antecedent_clauses[abs(literal)] = -1;
-                }
+                literals[abs(literal)] = -1;
+                literal_decision_levels[abs(literal)] = -1;
+                literal_antecedent_clauses[abs(literal)] = -1;
             }
         }
-        this->literal_count = literals.size();
-        this->assigned_literal_count = 0;
-        this->antecedent_clause = -1;
     }
+    this->literal_count = literals.size();
+    this->assigned_literal_count = 0;
+    this->antecedent_clause = -1;
+}
 
-int SATSolverCDCL::unitPropagation(int& decision_level)
+int SATSolverCDCL::unitPropagation(int &decision_level)
 {
     bool unit_clause_found = true;
 
@@ -71,7 +72,7 @@ int SATSolverCDCL::unitPropagation(int& decision_level)
             for (int j = 0; j < formula[i].size(); j++)
             {
                 int literal = formula[i][j];
-                
+
                 if (literals[abs(literal)] == -1)
                 {
                     unassigned_count++;
@@ -125,7 +126,7 @@ int SATSolverCDCL::chooseLiteral()
     return 0;
 }
 
-int SATSolverCDCL::analyzeConflict(int& decision_level)
+int SATSolverCDCL::analyzeConflict(int &decision_level)
 {
     std::vector<int> conflict_clause = formula[antecedent_clause];
 
@@ -142,7 +143,7 @@ int SATSolverCDCL::analyzeConflict(int& decision_level)
         for (int i = 0; i < conflict_clause.size(); i++)
         {
             int literal = conflict_clause[i];
-            
+
             if (literal_decision_levels[abs(literal)] == conflict_decision_level)
             {
                 this_level_count++;
@@ -195,7 +196,7 @@ int SATSolverCDCL::analyzeConflict(int& decision_level)
     return backtrack_level;
 }
 
-void SATSolverCDCL::backtrack(std::vector<int>& conflict_clause, int& decision_level)
+void SATSolverCDCL::backtrack(std::vector<int> &conflict_clause, int &decision_level)
 {
     for (auto literal : literals)
     {
@@ -212,9 +213,8 @@ void SATSolverCDCL::backtrack(std::vector<int>& conflict_clause, int& decision_l
 
 bool SATSolverCDCL::solve()
 {
-    sort(formula.begin(), formula.end(), [](const std::vector<int> &a, const std::vector<int> &b) {
-        return a.size() < b.size();
-    });
+    sort(formula.begin(), formula.end(), [](const std::vector<int> &a, const std::vector<int> &b)
+         { return a.size() < b.size(); });
 
     int decision_level = 0;
 
@@ -234,7 +234,6 @@ bool SATSolverCDCL::solve()
         int literal = SATSolverCDCL::chooseLiteral();
 
         decision_level++;
-
         literals[abs(literal)] = literal > 0 ? 1 : 0;
         literal_decision_levels[abs(literal)] = decision_level;
         assigned_literal_count++;
@@ -249,7 +248,7 @@ bool SATSolverCDCL::solve()
                 {
                     return false;
                 }
-                
+
                 decision_level = SATSolverCDCL::analyzeConflict(decision_level);
             }
             else
@@ -257,7 +256,6 @@ bool SATSolverCDCL::solve()
                 break;
             }
         }
-
     }
 
     return true;
