@@ -282,6 +282,8 @@ int SATSolverCDCL::chooseLiteral()
             }
         }
 
+        // Decay the scores of all literals if the number of conflicts 
+        // is a multiple of the number of literals
         if (num_conflicts % literals.size() == 0)
         {
             for (auto literal : literals)
