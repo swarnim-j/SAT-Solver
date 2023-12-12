@@ -1,4 +1,4 @@
-#include "CDCL-solver.hpp"
+#include "sat_solver.h"
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -46,7 +46,7 @@ bool parseDIMACS(std::string &dimacs_input, std::vector<std::vector<int>> &formu
         }
     }
 
-    std::cout << "Formula:\n";
+    /*std::cout << "Formula:\n";
 
     for (auto clause : formula)
     {
@@ -55,7 +55,7 @@ bool parseDIMACS(std::string &dimacs_input, std::vector<std::vector<int>> &formu
             std::cout << literal << " ";
         }
         std::cout << "\n";
-    }
+    }*/
 
     return true;
 }
@@ -78,7 +78,7 @@ int main(int argc, char *argv[])
 
     if (parseDIMACS(dimacs_input, formula))
     {
-        SATSolverCDCL solver(formula);
+        SATSolver solver(formula);
 
         if (solver.solve())
         {

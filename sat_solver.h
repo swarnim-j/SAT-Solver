@@ -84,7 +84,7 @@ enum SAT
  *     The number of conflicts
  */
 
-class SATSolverCDCL
+class SATSolver
 {
 private:
     // Member functions
@@ -108,14 +108,14 @@ private:
 
 public:
     // Constructors
-    SATSolverCDCL(std::vector<std::vector<int>> &);
-    SATSolverCDCL(std::vector<std::vector<int>> &, int &);
+    SATSolver(std::vector<std::vector<int>> &);
+    SATSolver(std::vector<std::vector<int>> &, int &);
 
     // Member functions
     bool solve();
 };
 
-SATSolverCDCL::SATSolverCDCL(std::vector<std::vector<int>> &formula)
+SATSolver::SATSolver(std::vector<std::vector<int>> &formula)
 {
     // Initialize the formula
     this->formula = formula;
@@ -151,7 +151,7 @@ SATSolverCDCL::SATSolverCDCL(std::vector<std::vector<int>> &formula)
     this->num_conflicts = 0;
 }
 
-SATSolverCDCL::SATSolverCDCL(std::vector<std::vector<int>> &formula, int &strategy)
+SATSolver::SATSolver(std::vector<std::vector<int>> &formula, int &strategy)
 {
     // Initialize the formula
     this->formula = formula;
@@ -187,7 +187,7 @@ SATSolverCDCL::SATSolverCDCL(std::vector<std::vector<int>> &formula, int &strate
     this->num_conflicts = 0;
 }
 
-int SATSolverCDCL::unitPropagation(int &decision_level)
+int SATSolver::unitPropagation(int &decision_level)
 {
     bool unit_clause_found = true;
 
@@ -252,7 +252,7 @@ int SATSolverCDCL::unitPropagation(int &decision_level)
     return SAT::normal;
 }
 
-int SATSolverCDCL::chooseLiteral()
+int SATSolver::chooseLiteral()
 {
     // Basic strategy
     if (strategy == 0)
@@ -294,7 +294,7 @@ int SATSolverCDCL::chooseLiteral()
     return 0;
 }
 
-int SATSolverCDCL::analyzeConflict(int decision_level)
+int SATSolver::analyzeConflict(int decision_level)
 {
     // Increment the number of conflicts
     num_conflicts++;
@@ -387,7 +387,7 @@ int SATSolverCDCL::analyzeConflict(int decision_level)
     return backtrack_level;
 }
 
-void SATSolverCDCL::backtrack(std::vector<int> &conflict_clause, int &decision_level)
+void SATSolver::backtrack(std::vector<int> &conflict_clause, int &decision_level)
 {
     for (auto literal : literals)
     {
@@ -404,7 +404,7 @@ void SATSolverCDCL::backtrack(std::vector<int> &conflict_clause, int &decision_l
     }
 }
 
-bool SATSolverCDCL::solve()
+bool SATSolver::solve()
 {
     // Sort the formula by clause length
     sort(formula.begin(), formula.end(), [](const std::vector<int> &a, const std::vector<int> &b)
@@ -412,7 +412,7 @@ bool SATSolverCDCL::solve()
 
     int decision_level = 0;
 
-    int result = SATSolverCDCL::unitPropagation(decision_level);
+    int result = SATSolver::unitPropagation(decision_level);
 
     // If the formula is satisfied, return true
     if (result == SAT::satisfied)
@@ -430,7 +430,7 @@ bool SATSolverCDCL::solve()
     while (literal_count != assigned_literal_count)
     {
         // Choose a literal
-        int literal = SATSolverCDCL::chooseLiteral();
+        int literal = SATSolver::chooseLiteral();
 
         // Increase the decision level and assign the newly chosen literal
         decision_level++;
@@ -440,7 +440,7 @@ bool SATSolverCDCL::solve()
 
         while (true)
         {
-            result = SATSolverCDCL::unitPropagation(decision_level);
+            result = SATSolver::unitPropagation(decision_level);
 
             if (result == SAT::unsatisfied)
             {
@@ -451,7 +451,7 @@ bool SATSolverCDCL::solve()
                 }
 
                 // Otherwise, backtrack
-                decision_level = SATSolverCDCL::analyzeConflict(decision_level);
+                decision_level = SATSolver::analyzeConflict(decision_level);
             }
             else
             {
