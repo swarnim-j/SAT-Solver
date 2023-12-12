@@ -113,6 +113,7 @@ public:
 
     // Member functions
     bool solve();
+    std::vector<std::pair<int, bool>> getAssignment();
 };
 
 SATSolver::SATSolver(std::vector<std::vector<int>> &formula)
@@ -461,4 +462,19 @@ bool SATSolver::solve()
     }
 
     return true;
+}
+
+std::vector<std::pair<int, bool>> SATSolver::getAssignment()
+{
+    std::vector<std::pair<int, bool>> assignment;
+    for (auto literal : literals)
+    {
+        std::pair<int, bool> literal_assignment;
+        literal_assignment.first = literal.first;
+        literal_assignment.second = literal.second == 1 ? true : false;
+        assignment.push_back(literal_assignment);
+    }
+    std::sort(assignment.begin(), assignment.end(), [](const std::pair<int, bool> &a, const std::pair<int, bool> &b)
+              { return a.first < b.first; });
+    return assignment;
 }
