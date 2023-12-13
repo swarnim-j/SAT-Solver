@@ -20,7 +20,7 @@ enum SAT
  *      Gets the index of the given literal
  *      @param literal The literal
  *      @return The index of the literal
- *             -1 if the literal is not in the map
+ *             -1 if the literal is not in the vector
  *
  *   int unitPropagation(int &decision_level)
  *       Propagates unit clauses
@@ -94,9 +94,6 @@ private:
     void printFormula(std::vector<std::vector<int>> &);
 
     // Data members
-    // std::unordered_map<int, int> literals;
-    // std::unordered_map<int, int> literal_decision_levels;
-    // std::unordered_map<int, int> literal_antecedent_clauses;
     struct Literal
     {
         int literal; // 1: true, 0: false, -1: unassigned
