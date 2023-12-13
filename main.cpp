@@ -4,8 +4,8 @@
 #include <sstream>
 
 /*
-*  Parses a DIMACS input file and stores the formula in a vector of vectors.
-*/
+ *  Parses a DIMACS input file and stores the formula in a vector of vectors.
+ */
 
 bool parseDIMACS(std::string &dimacs_input, std::vector<std::vector<int>> &formula)
 {
@@ -26,7 +26,7 @@ bool parseDIMACS(std::string &dimacs_input, std::vector<std::vector<int>> &formu
             problem_line >> token; // Ignore 'cnf'
 
             int num_variables, num_clauses;
-            
+
             if (!(problem_line >> num_variables >> num_clauses))
             {
                 std::cerr << "Error parsing problem line.\n";
@@ -61,8 +61,8 @@ bool parseDIMACS(std::string &dimacs_input, std::vector<std::vector<int>> &formu
 }
 
 /*
-* Main function.
-*/
+ * Main function.
+ */
 
 int main(int argc, char *argv[])
 {
