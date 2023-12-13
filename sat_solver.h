@@ -16,6 +16,12 @@ enum SAT
  * A class for the CDCL-based SAT solver
  *
  * Member functions:
+ *   int get_literal_index(int &literal)
+ *      Gets the index of the given literal
+ *      @param literal The literal
+ *      @return The index of the literal
+ *             -1 if the literal is not in the map
+ *
  *   int unitPropagation(int &decision_level)
  *       Propagates unit clauses
  *       @param decision_level The current decision level
@@ -43,25 +49,20 @@ enum SAT
  *               false if the formula is unsatisfied
  *
  * Data members:
- *   std::unordered_map<int, int> literals
- *       A map of literals
- *       Key: literal
- *       Value: 1 if the literal is true, 0 if the literal is false, -1 if the literal is unassigned
- *
- *   std::unordered_map<int, int> literal_decision_levels
- *       A map of literal decision levels
- *       Key: literal
- *       Value: the decision level of the literal
- *
- *   std::unordered_map<int, int> literal_antecedent_clauses
- *       A map of literal antecedent clauses
- *       Key: literal
- *       Value: the antecedent clause of the literal
- *
- *   std::unordered_map<int, double> literal_scores
- *      A map of literal scores for VSIDS
- *      Key: literal
- *      Value: the score of the literal
+ *   std::vector<Literal> literals
+ *      The literals
+ *          Literal:
+ *              int literal
+ *                  The literal
+ *              int value
+ *                  The value of the literal
+ *                  1: true, 0: false, -1: unassigned
+ *              int decision_level
+ *                  The decision level of the literal
+ *              int antecedent_clause
+ *                  The antecedent clause of the literal
+ *              double score
+ *                  The score of the literal
  *
  *   std::vector<std::vector<int>> formula
  *       The formula
@@ -79,9 +80,6 @@ enum SAT
  *       The strategy
  *       0: basic strategy
  *       1: VSIDS
- *
- *  int num_conflicts
- *     The number of conflicts
  */
 
 class SATSolver
@@ -106,7 +104,7 @@ private:
         int decision_level;
         int antecedent_clause;
         double score;
-        Literal (int literal, int value, int decision_level, int antecedent_clause = -1)
+        Literal(int literal, int value, int decision_level, int antecedent_clause = -1)
         {
             this->literal = literal;
             this->value = value;
@@ -281,7 +279,7 @@ int SATSolver::chooseLiteral()
     if (strategy == 0)
     {
         // Choose the first unassigned literal
-        for (auto& literal : literals)
+        for (auto &literal : literals)
         {
             if (literal.value == -1)
             {
@@ -384,7 +382,7 @@ int SATSolver::analyzeConflict(int decision_level)
     }
 
     // Increment the score of each literal in the conflict clause
-    for (auto& literal : conflict_clause)
+    for (auto &literal : conflict_clause)
     {
         int index = SATSolver::get_literal_index(literal);
         literals[index].score += 1.0;
@@ -413,7 +411,7 @@ int SATSolver::analyzeConflict(int decision_level)
 
 void SATSolver::backtrack(std::vector<int> &conflict_clause, int &decision_level)
 {
-    for (auto& literal : literals)
+    for (auto &literal : literals)
     {
         // If the literal is assigned at a higher decision level, unassign it
         if (literal.decision_level > decision_level)
@@ -489,7 +487,7 @@ bool SATSolver::solve()
 std::vector<std::pair<int, bool>> SATSolver::getAssignment()
 {
     std::vector<std::pair<int, bool>> assignment;
-    for (auto& literal : literals)
+    for (auto &literal : literals)
     {
         std::pair<int, bool> literal_assignment;
         literal_assignment.first = literal.literal;
