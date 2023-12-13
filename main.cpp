@@ -46,17 +46,6 @@ bool parseDIMACS(std::string &dimacs_input, std::vector<std::vector<int>> &formu
         }
     }
 
-    /*std::cout << "Formula:\n";
-
-    for (auto clause : formula)
-    {
-        for (auto literal : clause)
-        {
-            std::cout << literal << " ";
-        }
-        std::cout << "\n";
-    }*/
-
     return true;
 }
 

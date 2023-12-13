@@ -1,9 +1,6 @@
 #include <iostream>
 #include <vector>
 #include <algorithm>
-#include <unordered_map>
-#include <queue>
-#include <set>
 
 enum SAT
 {
@@ -112,7 +109,6 @@ private:
     };
 
     std::vector<Literal> literals;
-    // std::unordered_map<int, double> literal_scores;
     std::vector<std::vector<int>> formula;
     int literal_count;
     int assigned_literal_count;
