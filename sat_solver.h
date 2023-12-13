@@ -88,6 +88,7 @@ class SATSolver
 {
 private:
     // Member functions
+    int get_literal_index(int &);
     int unitPropagation(int &);
     int chooseLiteral();
     int analyzeConflict(int);
@@ -95,16 +96,33 @@ private:
     void printFormula(std::vector<std::vector<int>> &);
 
     // Data members
-    std::unordered_map<int, int> literals; // 1: true, 0: false, -1: unassigned
-    std::unordered_map<int, int> literal_decision_levels;
-    std::unordered_map<int, int> literal_antecedent_clauses;
-    std::unordered_map<int, double> literal_scores;
+    // std::unordered_map<int, int> literals;
+    // std::unordered_map<int, int> literal_decision_levels;
+    // std::unordered_map<int, int> literal_antecedent_clauses;
+    struct Literal
+    {
+        int literal; // 1: true, 0: false, -1: unassigned
+        int value;
+        int decision_level;
+        int antecedent_clause;
+        double score;
+        Literal (int literal, int value, int decision_level, int antecedent_clause = -1)
+        {
+            this->literal = literal;
+            this->value = value;
+            this->decision_level = decision_level;
+            this->antecedent_clause = -1;
+            this->score = 0;
+        }
+    };
+
+    std::vector<Literal> literals;
+    // std::unordered_map<int, double> literal_scores;
     std::vector<std::vector<int>> formula;
     int literal_count;
     int assigned_literal_count;
     int antecedent_clause;
     int strategy; // 0: basic strategy, 1: VSIDS
-    int num_conflicts;
 
 public:
     // Constructors
@@ -127,13 +145,11 @@ SATSolver::SATSolver(std::vector<std::vector<int>> &formula)
         for (int j = 0; j < formula[i].size(); j++)
         {
             int literal = formula[i][j];
-            if (literals.find(literal) == literals.end())
+            int index = SATSolver::get_literal_index(literal);
+            if (index == -1)
             {
                 // If the literal is not in the map, add it
-                literals[abs(literal)] = -1;
-                literal_decision_levels[abs(literal)] = -1;
-                literal_antecedent_clauses[abs(literal)] = -1;
-                literal_scores[abs(literal)] = 0;
+                literals.push_back(Literal(literal, -1, -1));
             }
         }
     }
@@ -147,9 +163,6 @@ SATSolver::SATSolver(std::vector<std::vector<int>> &formula)
 
     // Initialize the strategy
     this->strategy = 1;
-
-    // Initialize the number of conflicts
-    this->num_conflicts = 0;
 }
 
 SATSolver::SATSolver(std::vector<std::vector<int>> &formula, int &strategy)
@@ -163,13 +176,11 @@ SATSolver::SATSolver(std::vector<std::vector<int>> &formula, int &strategy)
         for (int j = 0; j < formula[i].size(); j++)
         {
             int literal = formula[i][j];
-            if (literals.find(literal) == literals.end())
+            int index = SATSolver::get_literal_index(literal);
+            if (index == -1)
             {
                 // If the literal is not in the map, add it
-                literals[abs(literal)] = -1;
-                literal_decision_levels[abs(literal)] = -1;
-                literal_antecedent_clauses[abs(literal)] = -1;
-                literal_scores[abs(literal)] = 0;
+                literals.push_back(Literal(literal, -1, -1));
             }
         }
     }
@@ -183,9 +194,18 @@ SATSolver::SATSolver(std::vector<std::vector<int>> &formula, int &strategy)
 
     // Initialize the strategy
     this->strategy = strategy;
+}
 
-    // Initialize the number of conflicts
-    this->num_conflicts = 0;
+int SATSolver::get_literal_index(int &literal)
+{
+    for (int i = 0; i < literals.size(); i++)
+    {
+        if (literals[i].literal == literal)
+        {
+            return i;
+        }
+    }
+    return -1;
 }
 
 int SATSolver::unitPropagation(int &decision_level)
@@ -201,21 +221,23 @@ int SATSolver::unitPropagation(int &decision_level)
         {
             int unassigned_count = 0;
             int unassigned_literal;
+            int unassigned_literal_index;
 
             bool clause_satisfied = false;
 
             for (int j = 0; j < formula[i].size(); j++)
             {
                 int literal = formula[i][j];
-
+                int index = SATSolver::get_literal_index(literal);
                 // If the literal is unassigned, increment the unassigned count
-                if (literals[abs(literal)] == -1)
+                if (literals[index].value == -1)
                 {
                     unassigned_count++;
                     unassigned_literal = literal;
+                    unassigned_literal_index = index;
                 }
                 // If the literal is assigned and satisfied, skip the clause
-                else if ((literals[abs(literal)] == 1 && literal < 0) || (literals[abs(literal)] == 0 && literal > 0))
+                else if ((literals[index].value == 1 && literal < 0) || (literals[index].value == 0 && literal > 0))
                 {
                     continue;
                 }
@@ -235,9 +257,9 @@ int SATSolver::unitPropagation(int &decision_level)
             // If the clause is unit, assign the literal
             if (unassigned_count == 1)
             {
-                literals[abs(unassigned_literal)] = unassigned_literal > 0 ? 1 : 0;
-                literal_decision_levels[abs(unassigned_literal)] = decision_level;
-                literal_antecedent_clauses[abs(unassigned_literal)] = i;
+                literals[unassigned_literal_index].value = unassigned_literal > 0 ? 1 : 0;
+                literals[unassigned_literal_index].decision_level = decision_level;
+                literals[unassigned_literal_index].antecedent_clause = i;
                 assigned_literal_count++;
 
                 unit_clause_found = true;
@@ -259,11 +281,11 @@ int SATSolver::chooseLiteral()
     if (strategy == 0)
     {
         // Choose the first unassigned literal
-        for (auto literal : literals)
+        for (auto& literal : literals)
         {
-            if (literal.second == -1)
+            if (literal.value == -1)
             {
-                return literal.first;
+                return literal.literal;
             }
         }
     }
@@ -279,14 +301,14 @@ int SATSolver::chooseLiteral()
 
         for (auto &literal : literals)
         {
-            if (literal.second == -1 && literal_scores[literal.first] >= max_score)
+            if (literal.value == -1 && literal.score >= max_score)
             {
-                max_score = literal_scores[literal.first];
-                max_score_literal = literal.first;
+                max_score = literal.score;
+                max_score_literal = literal.literal;
             }
 
             // Decay the score of the literal
-            literal_scores[literal.first] *= decay_factor;
+            literal.score *= decay_factor;
         }
 
         return max_score_literal;
@@ -297,9 +319,6 @@ int SATSolver::chooseLiteral()
 
 int SATSolver::analyzeConflict(int decision_level)
 {
-    // Increment the number of conflicts
-    num_conflicts++;
-
     // Conflict clause is the antecedent clause
     std::vector<int> conflict_clause = formula[antecedent_clause];
 
@@ -319,16 +338,17 @@ int SATSolver::analyzeConflict(int decision_level)
         for (int i = 0; i < conflict_clause.size(); i++)
         {
             int literal = conflict_clause[i];
+            int index = SATSolver::get_literal_index(literal);
 
             // If the literal is assigned at the current decision level, increment the count
-            if (literal_decision_levels[abs(literal)] == conflict_decision_level)
+            if (literals[index].decision_level == conflict_decision_level)
             {
                 this_level_count++;
             }
 
             // If the literal is assigned at the current decision level
             // and is unassigned, it is the resolver literal
-            if (literal_decision_levels[abs(literal)] == conflict_decision_level && literal_antecedent_clauses[abs(literal)] != -1)
+            if (literals[index].decision_level == conflict_decision_level && literals[index].antecedent_clause != -1)
             {
                 resolver_literal = literal;
             }
@@ -343,7 +363,8 @@ int SATSolver::analyzeConflict(int decision_level)
         // Conflict clause is the union of the antecedent clauses of the resolver literal
         // and the conflict clause without the resolver literal
         std::vector<int> first_clause = conflict_clause;
-        std::vector<int> second_clause = formula[literal_antecedent_clauses[abs(resolver_literal)]];
+        int resolver_index = SATSolver::get_literal_index(resolver_literal);
+        std::vector<int> second_clause = formula[literals[resolver_index].antecedent_clause];
 
         first_clause.insert(first_clause.end(), second_clause.begin(), second_clause.end());
 
@@ -363,9 +384,10 @@ int SATSolver::analyzeConflict(int decision_level)
     }
 
     // Increment the score of each literal in the conflict clause
-    for (auto literal : conflict_clause)
+    for (auto& literal : conflict_clause)
     {
-        literal_scores[abs(literal)] += 1.0;
+        int index = SATSolver::get_literal_index(literal);
+        literals[index].score += 1.0;
     }
 
     formula.push_back(conflict_clause);
@@ -377,9 +399,10 @@ int SATSolver::analyzeConflict(int decision_level)
     for (int i = 0; i < conflict_clause.size(); i++)
     {
         int literal = conflict_clause[i];
-        if (literal_decision_levels[abs(literal)] != conflict_decision_level && literal_decision_levels[abs(literal)] > backtrack_level)
+        int index = SATSolver::get_literal_index(literal);
+        if (literals[index].decision_level != conflict_decision_level && literals[index].decision_level > backtrack_level)
         {
-            backtrack_level = literal_decision_levels[abs(literal)];
+            backtrack_level = literals[index].decision_level;
         }
     }
 
@@ -390,16 +413,14 @@ int SATSolver::analyzeConflict(int decision_level)
 
 void SATSolver::backtrack(std::vector<int> &conflict_clause, int &decision_level)
 {
-    for (auto literal : literals)
+    for (auto& literal : literals)
     {
-        int literal_value = literal.first;
-
         // If the literal is assigned at a higher decision level, unassign it
-        if (literal_decision_levels[literal_value] > decision_level)
+        if (literal.decision_level > decision_level)
         {
-            literals[literal_value] = -1;
-            literal_decision_levels[literal_value] = -1;
-            literal_antecedent_clauses[literal_value] = -1;
+            literal.value = -1;
+            literal.decision_level = -1;
+            literal.antecedent_clause = -1;
             assigned_literal_count--;
         }
     }
@@ -432,11 +453,12 @@ bool SATSolver::solve()
     {
         // Choose a literal
         int literal = SATSolver::chooseLiteral();
+        int index = SATSolver::get_literal_index(literal);
 
         // Increase the decision level and assign the newly chosen literal
         decision_level++;
-        literals[abs(literal)] = literal > 0 ? 1 : 0;
-        literal_decision_levels[abs(literal)] = decision_level;
+        literals[index].value = literal > 0 ? 1 : 0;
+        literals[index].decision_level = decision_level;
         assigned_literal_count++;
 
         while (true)
@@ -467,11 +489,11 @@ bool SATSolver::solve()
 std::vector<std::pair<int, bool>> SATSolver::getAssignment()
 {
     std::vector<std::pair<int, bool>> assignment;
-    for (auto literal : literals)
+    for (auto& literal : literals)
     {
         std::pair<int, bool> literal_assignment;
-        literal_assignment.first = literal.first;
-        literal_assignment.second = literal.second == 1 ? true : false;
+        literal_assignment.first = literal.literal;
+        literal_assignment.second = literal.value == 1 ? true : false;
         assignment.push_back(literal_assignment);
     }
     std::sort(assignment.begin(), assignment.end(), [](const std::pair<int, bool> &a, const std::pair<int, bool> &b)
