@@ -77,12 +77,10 @@ int main(int argc, char *argv[])
 
         if (solver.solve())
         {
-            auto x = solver.getAssignment();
             std::cout << "SAT\n";
         }
         else
         {
-            auto x = solver.getAssignment();
             std::cout << "UNSAT\n";
         }
 
