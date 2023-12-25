@@ -1,0 +1,19 @@
+# CMake generated files
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+
+# CMake Precompiled Headers
+*.gch
+
+# CMake executables
+CMakeScripts/
+CMakeTmp/
+
+# CMake custom files
+CPackConfig.cmake
+CPackSourceConfig.cmake
+
+# CMake module files
+Modules/
