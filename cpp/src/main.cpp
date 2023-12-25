@@ -12,6 +12,13 @@ bool parseDIMACS(std::string &dimacs_input, std::vector<std::vector<int>> &formu
     std::istringstream iss(dimacs_input);
     std::string line;
 
+    /*size_t found = dimacs_input.find("\\n");
+    while (found != std::string::npos)
+    {
+        dimacs_input.replace(found, 2, "\n");
+        found = dimacs_input.find("\\n");
+    }*/
+
     while (std::getline(iss, line))
     {
         if (line[0] == 'c' || line.empty())
@@ -61,7 +68,13 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    std::string dimacs_input = argv[1];
+    // std::string dimacs_input = argv[1];
+
+    std::string dimacs_input;
+    std::ifstream infile(argv[1]);
+    std::stringstream buffer;
+    buffer << infile.rdbuf();
+    dimacs_input = buffer.str();
 
     std::vector<std::vector<int>> formula;
 
@@ -71,11 +84,11 @@ int main(int argc, char *argv[])
 
         if (solver.solve())
         {
-            std::cout << "SAT\n";
+            std::cout << formula.size() << " SAT\n";
         }
         else
         {
-            std::cout << "UNSAT\n";
+            std::cout << formula.size() << "UNSAT\n";
         }
 
         return 0;

@@ -1,7 +1,7 @@
 CMakeFiles/LTLSolver.dir/src/main.cpp.o: \
- /home/swarnim/Cambridge/Projects/SAT-Solver/backend/src/main.cpp \
+ /home/swarnim/Cambridge/Projects/SAT-Solver/cpp/src/main.cpp \
  /usr/include/stdc-predef.h \
- /home/swarnim/Cambridge/Projects/SAT-Solver/backend/src/sat_solver.h \
+ /home/swarnim/Cambridge/Projects/SAT-Solver/cpp/src/sat_solver.h \
  /usr/include/c++/11/iostream \
  /usr/include/x86_64-linux-gnu/c++/11/bits/c++config.h \
  /usr/include/x86_64-linux-gnu/c++/11/bits/os_defines.h \

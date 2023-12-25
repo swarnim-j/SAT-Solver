@@ -1,23 +1,45 @@
-import logo from './logo.svg';
-import './App.css';
+import React, { useState } from 'react';
 
 function App() {
+  const [inputText, setInputText] = useState('');
+  const [displayedText, setDisplayedText] = useState('');
+
+  const handleButtonClick = async () => {
+    try {
+      const response = await fetch('http://127.0.0.1:5000/process_text', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ inputText }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+
+      const data = await response.json();
+      setDisplayedText(data.outputText);
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  };
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div>
+      <div>
+        <label>
+          Enter CNF formula (DIMACS): 
+          <textarea
+            value={inputText}
+            onChange={(e) => setInputText(e.target.value)}
+          />
+        </label>
+        <button onClick={handleButtonClick}>Solve</button>
+      </div>
+      <div>
+        <p>SAT/UNSAT: {displayedText}</p>
+      </div>
     </div>
   );
 }
