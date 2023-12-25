@@ -1,0 +1,3 @@
+/home/swarnim/Cambridge/Projects/SAT-Solver/backend/build/CMakeFiles/LTLSolver.dir
+/home/swarnim/Cambridge/Projects/SAT-Solver/backend/build/CMakeFiles/edit_cache.dir
+/home/swarnim/Cambridge/Projects/SAT-Solver/backend/build/CMakeFiles/rebuild_cache.dir

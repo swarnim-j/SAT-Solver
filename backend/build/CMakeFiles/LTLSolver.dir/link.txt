@@ -1,0 +1,1 @@
+/usr/bin/c++ CMakeFiles/LTLSolver.dir/src/main.cpp.o -o LTLSolver 
