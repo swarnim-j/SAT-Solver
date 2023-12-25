@@ -25,8 +25,6 @@ def process_text():
         output_text = "Satisfiable"
     else:
         output_text = "Unsatisfiable"
-    
-    output_text = result.stdout.strip()
 
     return jsonify({'outputText': output_text})
 

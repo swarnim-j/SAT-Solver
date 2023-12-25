@@ -1,6 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <algorithm>
+#include <iostream>
 
 enum SAT
 {
@@ -93,8 +94,8 @@ private:
     // Data members
     struct Literal
     {
-        int literal; // 1: true, 0: false, -1: unassigned
-        int value;
+        int literal; // absolute value of literal
+        int value; // 1: true, 0: false, -1: unassigned
         int decision_level;
         int antecedent_clause;
         double score;
@@ -135,7 +136,7 @@ SATSolver::SATSolver(std::vector<std::vector<int>> &formula)
     {
         for (int j = 0; j < formula[i].size(); j++)
         {
-            int literal = formula[i][j];
+            int literal = abs(formula[i][j]);
             int index = SATSolver::get_literal_index(literal);
             if (index == -1)
             {
@@ -171,7 +172,7 @@ SATSolver::SATSolver(std::vector<std::vector<int>> &formula, int &strategy)
             if (index == -1)
             {
                 // If the literal is not in the map, add it
-                literals.push_back(Literal(literal, -1, -1));
+                literals.push_back(Literal(abs(literal), -1, -1));
             }
         }
     }
@@ -191,7 +192,7 @@ int SATSolver::get_literal_index(int &literal)
 {
     for (int i = 0; i < literals.size(); i++)
     {
-        if (literals[i].literal == literal)
+        if (literals[i].literal == abs(literal))
         {
             return i;
         }
@@ -248,6 +249,7 @@ int SATSolver::unitPropagation(int &decision_level)
             // If the clause is unit, assign the literal
             if (unassigned_count == 1)
             {
+                literals[unassigned_literal_index].literal = abs(unassigned_literal);
                 literals[unassigned_literal_index].value = unassigned_literal > 0 ? 1 : 0;
                 literals[unassigned_literal_index].decision_level = decision_level;
                 literals[unassigned_literal_index].antecedent_clause = i;
@@ -361,7 +363,7 @@ int SATSolver::analyzeConflict(int decision_level)
 
         for (int i = 0; i < first_clause.size(); i++)
         {
-            if (first_clause[i] == resolver_literal || first_clause[i] == -resolver_literal)
+            if (abs(first_clause[i]) == abs(resolver_literal))
             {
                 first_clause.erase(first_clause.begin() + i);
                 i--;
@@ -375,7 +377,7 @@ int SATSolver::analyzeConflict(int decision_level)
     }
 
     // Increment the score of each literal in the conflict clause
-    for (auto &literal : conflict_clause)
+    for (int& literal : conflict_clause)
     {
         int index = SATSolver::get_literal_index(literal);
         literals[index].score += 1.0;
@@ -485,6 +487,7 @@ std::vector<std::pair<int, bool>> SATSolver::getAssignment()
         std::pair<int, bool> literal_assignment;
         literal_assignment.first = literal.literal;
         literal_assignment.second = literal.value == 1 ? true : false;
+        std::cout << literal.literal << " " << literal.value << "\n";
         assignment.push_back(literal_assignment);
     }
     std::sort(assignment.begin(), assignment.end(), [](const std::pair<int, bool> &a, const std::pair<int, bool> &b)
